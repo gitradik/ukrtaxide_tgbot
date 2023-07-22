@@ -68,6 +68,7 @@ async def free_btn(query: types.CallbackQuery) -> None:
 
 
 def main():
+    print("TEST")
     # Add handler for the start command
     dp.register_message_handler(start, commands=["start"])
 
