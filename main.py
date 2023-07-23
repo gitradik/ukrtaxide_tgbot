@@ -67,7 +67,7 @@ async def free_btn(query: types.CallbackQuery) -> None:
             text=f"Извините, {user.mention}, но ваше местоположение не было предоставлено.",
         )
 
-async def on_startup():
+async def on_startup(dp):
     # Set up webhook
     await bot.delete_webhook()
     await bot.set_webhook(url="https://ukrtaxidetgbot-ac1c3a901204.herokuapp.com/")  # Replace with your Heroku app URL
