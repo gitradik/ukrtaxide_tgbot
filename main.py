@@ -16,7 +16,6 @@ dp = Dispatcher(bot)
 # Global dictionary to store user locations
 user_locations = {}
 
-
 async def start(message: types.Message) -> None:
     user = message.from_user
     await message.reply(fr"Привет, {user.mention}! Пожалуйста, отправьте своё местоположение.")
@@ -51,7 +50,7 @@ async def free_btn(query: types.CallbackQuery) -> None:
 
     # Check if the user has already pressed the button
     if users_pressed_button[user.id] > 1:
-        await query.message.reply("Вы уже нажали кнопку 'Свободен'.")
+        await query.message.reply("Вы уже нажали кнопку [Свободен], отправьте своё местоположение, если хотите снова опубликовать геометку.")
         return
 
     # Get the user's location from the global dictionary using user_id as the key
@@ -72,7 +71,7 @@ async def free_btn(query: types.CallbackQuery) -> None:
         await query.message.reply(f"{user.mention}, спасибо за предоставленное местоположение. Мы отправили его в группу {CHAT_ID}.")
         await bot.send_message(
             chat_id=query.message.chat.id,
-            text=f"Пожалуйста, отправьте своё местоположение, если хотите снова опубликовать геолокацию своего."
+            text=f"Пожалуйста, отправьте своё местоположение, если хотите снова опубликовать геометку."
         )
     else:
         await bot.send_message(
