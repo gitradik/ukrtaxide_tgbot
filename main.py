@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
-from background import keep_alive
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.dispatcher.webhook import get_new_configured_app
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
@@ -67,9 +67,13 @@ async def free_btn(query: types.CallbackQuery) -> None:
             text=f"Извините, {user.mention}, но ваше местоположение не было предоставлено.",
         )
 
+async def on_startup(dp):
+    # Set up webhook
+    await bot.delete_webhook()
+    await bot.set_webhook(url="http://localhost")  # Replace with your Heroku app URL
+
 
 def main():
-    print("TEST")
     # Add handler for the start command
     dp.register_message_handler(start, commands=["start"])
 
@@ -78,10 +82,19 @@ def main():
 
     # Add handler for the "Свободен" button
     dp.register_callback_query_handler(free_btn, text="free")
-    keep_alive()
-    # Start the bot
-    executor.start_polling(dp, skip_updates=True)
 
+    # Get the app with configured webhook
+    # app = get_new_configured_app(dp)
+
+    executor.start_polling(dp, skip_updates=True)
+    # Start the webhook
+    # executor.start_webhook(
+    #     dispatcher=dp,
+    #     webhook_path="/",
+    #     on_startup=on_startup,
+    #     skip_updates=True,
+    #     app=app
+    # )
 
 if __name__ == "__main__":
     main()
