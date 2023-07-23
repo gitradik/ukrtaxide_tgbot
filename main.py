@@ -6,6 +6,7 @@ from aiogram.dispatcher.webhook import get_new_configured_app
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
+WEBHOOK = os.getenv('TG_WEBHOOK')
 PORT = int(os.environ.get('PORT', 80))
 
 bot = Bot(token=TOKEN)
@@ -56,12 +57,17 @@ async def free_btn(query: types.CallbackQuery) -> None:
 
         # Send the location map to the group
         await bot.send_location(chat_id="@UKRTaxiBremenGroup", latitude=latitude, longitude=longitude)
+
+        # Delete all previous messages in the bot chat
+        chat_id = query.message.chat.id
+        message_id = query.message.message_id
+        await bot.delete_message(chat_id, message_id)
+
         await query.message.reply(f"{user.mention}, спасибо за предоставленное местоположение. Мы отправили его в группу @UKRTaxiBremenGroup.")
-        aa = await bot.send_message(
+        await bot.send_message(
             chat_id=query.message.chat.id,
             text=f"Пожалуйста, отправьте своё местоположение, если вы считаете, что оно значительно поменялось."
         )
-        print(aa)
     else:
         await bot.send_message(
             chat_id=query.message.chat.id,
@@ -71,7 +77,7 @@ async def free_btn(query: types.CallbackQuery) -> None:
 async def on_startup(dp):
     # Set up webhook
     await bot.delete_webhook()
-    await bot.set_webhook(url="https://ukrtaxidetgbot-ac1c3a901204.herokuapp.com/")  # Replace with your Heroku app URL
+    await bot.set_webhook(url=WEBHOOK)  # Replace with your Heroku app URL
 
 
 def main():
@@ -83,7 +89,6 @@ def main():
 
     # Add handler for the "Свободен" button
     dp.register_callback_query_handler(free_btn, text="free")
-
 
     # Start the webhook
     executor.start_webhook(
