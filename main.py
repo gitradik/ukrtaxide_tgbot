@@ -21,12 +21,21 @@ async def start(message: types.Message) -> None:
     user = message.from_user
     await message.reply(fr"Привет, {user.mention}! Пожалуйста, отправьте своё местоположение.")
 
+# Create a set to store user IDs who have already pressed the button
+users_pressed_button = set()
+
 async def handle_location(message: types.Message) -> None:
     user = message.from_user
     if message.location:
         latitude = message.location.latitude
         longitude = message.location.longitude
-
+        
+        if user.id in users_pressed_button:
+            users_pressed_button.remove(user.id)
+        else:
+            # Add the user ID to the set to indicate that the button has been pressed
+            users_pressed_button.add(user.id)
+            
         # Save the location in the global dictionary using user_id as the key
         user_locations[user.id] = {'latitude': latitude, 'longitude': longitude}
         
@@ -38,10 +47,6 @@ async def handle_location(message: types.Message) -> None:
     else:
         await message.reply(f"Извините, {user.mention}, но местоположение не доступно.")
 
-
-# Create a set to store user IDs who have already pressed the button
-users_pressed_button = set()
-
 async def free_btn(query: types.CallbackQuery) -> None:
     await query.answer()
     user = query.from_user
@@ -50,9 +55,6 @@ async def free_btn(query: types.CallbackQuery) -> None:
     if user.id in users_pressed_button:
         await query.message.reply("Вы уже нажали кнопку 'Свободен'.")
         return
-
-    # Add the user ID to the set to indicate that the button has been pressed
-    users_pressed_button.add(user.id)
 
     # Get the user's location from the global dictionary using user_id as the key
     location = user_locations.get(user.id)
