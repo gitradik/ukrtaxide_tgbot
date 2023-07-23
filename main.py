@@ -2,7 +2,6 @@ import os
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.utils import exceptions
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
@@ -22,18 +21,6 @@ async def start(message: types.Message) -> None:
     user = message.from_user
     await message.reply(fr"Привет, {user.mention}! Пожалуйста, отправьте своё местоположение.")
 
-async def set_default_chat_title(chat_id: int, default_title: str) -> None:
-    try:
-        await bot.set_chat_title(chat_id=chat_id, title=default_title)
-        print(f"Default chat title set: {default_title}")
-    except Exception as e:
-        print(f"Failed to set default chat title. Error: {e}")
-
-async def on_chat_member_join(message: types.Message) -> None:
-    # Replace 'Your Default Title' with the desired default title for the bot chat
-    default_title = 'Your Default Title'
-    await set_default_chat_title(message.chat.id, default_title)
-
 async def handle_location(message: types.Message) -> None:
     user = message.from_user
     if message.location:
@@ -52,9 +39,20 @@ async def handle_location(message: types.Message) -> None:
         await message.reply(f"Извините, {user.mention}, но местоположение не доступно.")
 
 
+# Create a set to store user IDs who have already pressed the button
+users_pressed_button = set()
+
 async def free_btn(query: types.CallbackQuery) -> None:
     await query.answer()
     user = query.from_user
+
+    # Check if the user has already pressed the button
+    if user.id in users_pressed_button:
+        await query.message.reply("Вы уже нажали кнопку 'Свободен'.")
+        return
+
+    # Add the user ID to the set to indicate that the button has been pressed
+    users_pressed_button.add(user.id)
 
     # Get the user's location from the global dictionary using user_id as the key
     location = user_locations.get(user.id)
@@ -89,8 +87,6 @@ async def on_startup(dp):
 
 
 def main():
-    dp.register_message_handler(on_chat_member_join, content_types=types.ContentTypes.NEW_CHAT_MEMBERS)
-
     # Add handler for the start command
     dp.register_message_handler(start, commands=["start"])
 
