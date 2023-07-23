@@ -1,8 +1,8 @@
-from asyncio import exceptions
 import os
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils import exceptions
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
@@ -69,7 +69,7 @@ async def free_btn(query: types.CallbackQuery) -> None:
         try:
             # Delete all previous messages
             await bot.delete_message(chat_id, message_id)
-        except exceptions.MessageToDeleteNotFound:
+        except exceptions.MessageNotModified:
             pass
 
         await query.message.reply(f"{user.mention}, спасибо за предоставленное местоположение. Мы отправили его в группу @UKRTaxiBremenGroup.")
