@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.dispatcher.webhook import get_new_configured_app
 
 load_dotenv()
-TOKEN = os.getenv('TG_BOT_TOKEN')
+TOKEN = "6330978785:AAGNdALi80TeUoql_SfW0IF4Iz6O9wuQMAI" #os.getenv('TG_BOT_TOKEN')
 PORT = int(os.environ.get('PORT', 80))
 
 bot = Bot(token=TOKEN)
