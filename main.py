@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from background import keep_alive
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -77,7 +78,7 @@ def main():
 
     # Add handler for the "Свободен" button
     dp.register_callback_query_handler(free_btn, text="free")
-
+    keep_alive()
     # Start the bot
     executor.start_polling(dp, skip_updates=True)
 
