@@ -71,6 +71,8 @@ async def free_btn(query: types.CallbackQuery) -> None:
             await bot.delete_message(chat_id, message_id)
         except exceptions.MessageNotModified:
             pass
+        except exceptions.MessageToDeleteNotFound:
+            pass
 
         await query.message.reply(f"{user.mention}, спасибо за предоставленное местоположение. Мы отправили его в группу @UKRTaxiBremenGroup.")
         await bot.send_message(
