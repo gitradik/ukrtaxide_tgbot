@@ -2,11 +2,11 @@ import os
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.dispatcher.webhook import get_new_configured_app
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
 WEBHOOK = os.getenv('TG_WEBHOOK')
+HOST = int(os.environ.get('HOST', "0.0.0.0"))
 PORT = int(os.environ.get('PORT', 80))
 
 bot = Bot(token=TOKEN)
@@ -59,9 +59,9 @@ async def free_btn(query: types.CallbackQuery) -> None:
         await bot.send_location(chat_id="@UKRTaxiBremenGroup", latitude=latitude, longitude=longitude)
 
         # Delete all previous messages in the bot chat
-        chat_id = query.message.chat.id
-        message_id = query.message.message_id
-        await bot.delete_message(chat_id, message_id)
+        # chat_id = query.message.chat.id
+        # message_id = query.message.message_id
+        # await bot.delete_message(chat_id, message_id)
 
         await query.message.reply(f"{user.mention}, спасибо за предоставленное местоположение. Мы отправили его в группу @UKRTaxiBremenGroup.")
         await bot.send_message(
@@ -96,7 +96,7 @@ def main():
         webhook_path="/",
         on_startup=on_startup,
         skip_updates=True,
-        host="0.0.0.0",
+        host=HOST,
         port=PORT,
     )
 
