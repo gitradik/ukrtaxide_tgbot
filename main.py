@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from aiogram.utils import exceptions
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -58,15 +59,32 @@ async def free_btn(query: types.CallbackQuery) -> None:
         # Send the location map to the group
         await bot.send_location(chat_id="@UKRTaxiBremenGroup", latitude=latitude, longitude=longitude)
 
-        # Delete all previous messages in the bot chat
-        # chat_id = query.message.chat.id
-        # message_id = query.message.message_id
-        # await bot.delete_message(chat_id, message_id)
+        # Get the message with the button press
+        message = query.message
+
+        # Get the chat_id and message_id of the message with the button press
+        chat_id = message.chat.id
+        message_id = message.message_id
+
+        # Get the list of messages in the chat
+        messages = await bot.api.get_chat_history(chat_id)
+
+        # Find the index of the message with the button press
+        index = next((i for i, msg in enumerate(messages) if msg.message_id == message_id), None)
+
+        # Delete all previous messages by editing their content
+        if index is not None:
+            for i in range(index):
+                try:
+                    await bot.api.edit_message_text(chat_id, messages[i].message_id, text="Message deleted.")
+                except exceptions.MessageTextIsEmpty:
+                    # If the message is already empty, we cannot edit it, so we skip it
+                    pass
 
         await query.message.reply(f"{user.mention}, спасибо за предоставленное местоположение. Мы отправили его в группу @UKRTaxiBremenGroup.")
         await bot.send_message(
             chat_id=query.message.chat.id,
-            text=f"Пожалуйста, отправьте своё местоположение, если вы считаете, что оно значительно поменялось."
+            text=f"Пожалуйста, отправьте своё местоположение, если хотите снова опубликовать геолокацию своего авто."
         )
     else:
         await bot.send_message(
