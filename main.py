@@ -6,6 +6,7 @@ from aiogram.dispatcher.webhook import get_new_configured_app
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
+PORT = int(os.environ.get('PORT', 80))
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
@@ -83,15 +84,15 @@ def main():
     # Add handler for the "Свободен" button
     dp.register_callback_query_handler(free_btn, text="free")
 
-    # Get the app with configured webhook
-    app = get_new_configured_app(dp)
 
     # Start the webhook
     executor.start_webhook(
         dispatcher=dp,
         webhook_path="/",
         on_startup=on_startup,
-        skip_updates=True
+        skip_updates=True,
+        host="0.0.0.0",
+        port=PORT,
     )
 
 if __name__ == "__main__":
