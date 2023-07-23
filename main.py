@@ -7,6 +7,7 @@ from aiogram.utils import exceptions
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
 WEBHOOK = os.getenv('TG_WEBHOOK')
+CHAT_ID = os.getenv('TG_CHAT_ID')
 HOST = os.getenv('HOST')
 PORT = int(os.environ.get('PORT', 80))
 
@@ -21,6 +22,17 @@ async def start(message: types.Message) -> None:
     user = message.from_user
     await message.reply(fr"Привет, {user.mention}! Пожалуйста, отправьте своё местоположение.")
 
+async def set_default_chat_title(chat_id: int, default_title: str) -> None:
+    try:
+        await bot.set_chat_title(chat_id=chat_id, title=default_title)
+        print(f"Default chat title set: {default_title}")
+    except Exception as e:
+        print(f"Failed to set default chat title. Error: {e}")
+
+async def on_chat_member_join(message: types.Message) -> None:
+    # Replace 'Your Default Title' with the desired default title for the bot chat
+    default_title = 'Your Default Title'
+    await set_default_chat_title(message.chat.id, default_title)
 
 async def handle_location(message: types.Message) -> None:
     user = message.from_user
@@ -52,29 +64,14 @@ async def free_btn(query: types.CallbackQuery) -> None:
         longitude = location['longitude']
 
         await bot.send_message(
-            chat_id="@UKRTaxiBremenGroup",  # Replace with the name or ID of your group
+            chat_id=CHAT_ID,  # Replace with the name or ID of your group
             text=f"{user.mention} свободен(а)!",
         )
 
         # Send the location map to the group
-        await bot.send_location(chat_id="@UKRTaxiBremenGroup", latitude=latitude, longitude=longitude)
+        await bot.send_location(chat_id=CHAT_ID, latitude=latitude, longitude=longitude)
 
-        # Get the message with the button press
-        message = query.message
-
-        # Get the chat_id and message_id of the message with the button press
-        chat_id = message.chat.id
-        message_id = message.message_id
-
-        try:
-            # Delete all previous messages
-            await bot.delete_message(chat_id, message_id)
-        except exceptions.MessageNotModified:
-            pass
-        except exceptions.MessageToDeleteNotFound:
-            pass
-
-        await query.message.reply(f"{user.mention}, спасибо за предоставленное местоположение. Мы отправили его в группу @UKRTaxiBremenGroup.")
+        await query.message.reply(f"{user.mention}, спасибо за предоставленное местоположение. Мы отправили его в группу {CHAT_ID}.")
         await bot.send_message(
             chat_id=query.message.chat.id,
             text=f"Пожалуйста, отправьте своё местоположение, если хотите снова опубликовать геолокацию своего."
@@ -92,6 +89,8 @@ async def on_startup(dp):
 
 
 def main():
+    dp.register_message_handler(on_chat_member_join, content_types=types.ContentTypes.NEW_CHAT_MEMBERS)
+
     # Add handler for the start command
     dp.register_message_handler(start, commands=["start"])
 
