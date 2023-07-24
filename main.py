@@ -19,8 +19,11 @@ user_locations = {}
 async def start(message: types.Message) -> None:
     user = message.from_user
     await message.reply(fr"Привет, {user.mention}! Если вы планируете предоставлять услуги такси, пожалуйста, отправьте нам свою Геолокацию из меню 📎.")
-# Create a set to store user IDs who have already pressed the button
+    
+# Create a map to store user IDs who have already pressed the button
 users_pressed_button = {}
+# Create a set to store user IDs who have already pressed the button
+users_pressed_button_without_username = set()
 
 async def handle_location(message: types.Message) -> None:
     user = message.from_user
@@ -47,11 +50,20 @@ async def free_btn(query: types.CallbackQuery) -> None:
     await query.answer()
     user = query.from_user
 
-    users_pressed_button[user.id] += 1
+    # Check if the user not have @username and haven't received the reminder message yet
+    if user.username is None:
+        if user.id not in users_pressed_button_without_username:
+            await query.message.reply("Важное сообщение! ⚠️\n\nДля продолжения работы с ботом необходимо добавить \"имя пользователя\" (также известное как \"username\") в настройках Telegram.\nБез \"имени пользователя\" бот не сможет предоставить вам полный функционал.\nДобавьте \"имя пользователя\" прямо сейчас, чтобы получить все возможности нашего бота!\n\nСпасибо за понимание! 🙏")
+        
+        users_pressed_button_without_username.add(user.id)
+        return
 
+    users_pressed_button[user.id] += 1
+    
     # Check if the user has already pressed the button
     if users_pressed_button[user.id] > 1:
-        await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить геометку📍, просто отправьте свою Геолокацию ещё раз.")
+        if users_pressed_button[user.id] == 2:
+            await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить геометку📍, просто отправьте свою Геолокацию ещё раз.")
         return
 
     # Get the user's location from the global dictionary using user_id as the key
