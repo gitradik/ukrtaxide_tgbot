@@ -22,10 +22,8 @@ async def start(message: types.Message) -> None:
     await message.reply(fr"Привет, {user.mention}! Если вы планируете предоставлять услуги такси, пожалуйста, отправьте нам свою Геолокацию из меню 📎.")
     
 # Create a map to store user IDs who have already pressed the button
-users_pressed_button = {}
-users_pressed_confirmation_button = {}
-# Create a set to store user IDs who have already pressed the button
-users_pressed_button_without_username = set()
+users_pressed_button = set()
+users_pressed_confirmation_button = set()
 
 async def handle_location(message: types.Message) -> None:
     user = message.from_user
@@ -33,8 +31,10 @@ async def handle_location(message: types.Message) -> None:
         latitude = message.location.latitude
         longitude = message.location.longitude
 
-        users_pressed_button[user.id] = False
-        users_pressed_confirmation_button[user.id] = False
+        if user.id in users_pressed_button:
+            users_pressed_button.remove(user.id)
+        if user.id in users_pressed_confirmation_button:
+            users_pressed_confirmation_button.remove(user.id)
             
         # Save the location in the global dictionary using user_id as the key
         user_locations[user.id] = {'latitude': latitude, 'longitude': longitude}
@@ -96,20 +96,15 @@ async def free_btn(query: types.CallbackQuery) -> None:
     
     # Check if the user not have @username and haven't received the reminder message yet
     if user.username is None:
-        if user.id not in users_pressed_button_without_username:
-            await query.message.reply("Важное сообщение! ⚠️\n\nДля продолжения работы с ботом необходимо добавить \"имя пользователя\" (также известное как \"username\") в настройках Telegram.\nБез \"имени пользователя\" бот не сможет предоставить вам полный функционал.\nДобавьте \"имя пользователя\" прямо сейчас, чтобы получить все возможности нашего бота!\n\nСпасибо за понимание! 🙏")
-        
-        users_pressed_button_without_username.add(user.id)
+        await query.message.reply("Важное сообщение! ⚠️\n\nДля продолжения работы с ботом необходимо добавить \"имя пользователя\" (также известное как \"username\") в настройках Telegram.\nБез \"имени пользователя\" бот не сможет предоставить вам полный функционал.\nДобавьте \"имя пользователя\" прямо сейчас, чтобы получить все возможности нашего бота!\n\nСпасибо за понимание! 🙏")
         return
-    elif user.id in users_pressed_button_without_username:
-        users_pressed_button_without_username.remove(user.id)
 
     # Check if the user has already pressed the button
-    if users_pressed_button[user.id] is True:
+    if user.id in users_pressed_button:
         await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить 📍геометку, просто отправьте свою Геолокацию ещё раз.")
         return
     
-    users_pressed_button[user.id] = True
+    users_pressed_button.add(user.id)
 
     # Call the confirm_free_btn handler to show the confirmation model window
     await confirm_free_btn(query)
@@ -119,11 +114,11 @@ async def handle_confirmation(query: types.CallbackQuery) -> None:
     await query.answer()
     action = query.data
     user = query.from_user
-    
-    if users_pressed_confirmation_button[user.id] is True:
+
+    if user.id in users_pressed_confirmation_button:
         return
 
-    users_pressed_confirmation_button[user.id] = True
+    users_pressed_confirmation_button.add(user.id)
 
     if action == "confirm_yes":
         # Get the user's location from the global dictionary using user_id as the key
