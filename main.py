@@ -67,7 +67,7 @@ async def confirm_free_btn(query: types.CallbackQuery) -> bool:
     )
 
     # Define the handler for the user's choice
-    async def handle_confirmation(confirmation_query: types.CallbackQuery):
+    async def handle_confirm(confirmation_query: types.CallbackQuery):
         await confirmation_query.answer()
         if confirmation_query.data == "confirm_yes":
             await confirmation_queue.put(True)
@@ -75,13 +75,13 @@ async def confirm_free_btn(query: types.CallbackQuery) -> bool:
             await confirmation_queue.put(False)
 
     # Register the handler for the user's choice
-    dp.register_callback_query_handler(handle_confirmation, lambda q: q.message.message_id == query.message.message_id)
+    dp.register_callback_query_handler(handle_confirm, lambda q: q.message.message_id == query.message.message_id)
 
     # Wait until the user makes a choice
     confirmed = await confirmation_queue.get()
 
     # Unregister the handler after it has been triggered
-    dp.unregister_callback_query_handler(handle_confirmation)
+    dp.unregister_callback_query_handler(handle_confirm)
 
     # Return the user's choice (True for "Да" and False for "Нет")
     return confirmed
@@ -129,7 +129,8 @@ async def free_btn(query: types.CallbackQuery) -> None:
         # Log the error or handle it appropriately
         print(f"Error handling callback query in free_btn: {e}")
 
-# Add a new callback query handler to handle the "Да" and "Нет" buttons from the confirmation model window
+# Add a new callback query handler to handle the "Да" and "Нет" buttons from the confirmation model window# Add the async_task decorator to handle_confirmation function
+@dp.async_task
 async def handle_confirmation(query: types.CallbackQuery) -> None:
     try:
         await query.answer()
