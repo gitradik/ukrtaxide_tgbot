@@ -58,12 +58,8 @@ async def free_btn(query: types.CallbackQuery) -> None:
         
         users_pressed_button_without_username.add(user.id)
         return
-    elif user.id not in users_pressed_button_without_username:
-        try:
-            users_pressed_button_without_username.remove(user.id)
-        except InvalidQueryID as e:
-            # Handle the exception here, such as retrying the query or notifying the user
-            print(f"Error: {e}")
+    elif user.id in users_pressed_button_without_username:
+        users_pressed_button_without_username.remove(user.id)
 
     users_pressed_button[user.id] += 1
     
