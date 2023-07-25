@@ -52,50 +52,23 @@ async def handle_location(message: types.Message) -> None:
         await message.reply(f"Простите, {user.mention}, но мы не можем получить доступ к вашему местоположению.\n\n Пожалуйста, свяжитесь с администратором чата @ramal_softdev для помощи. Будем ждать вашего обращения и надеемся, что сможем предоставить вам нашу услугу такси в ближайшее время. \n Спасибо за понимание! 🚕🌟😊")
 
 
-async def confirm_free_btn(query: types.CallbackQuery) -> bool:
-    await query.answer()
-    # Create a queue to pass the user's confirmation choice
-    confirmation_queue = asyncio.Queue()
-
-    # Create an InlineKeyboardMarkup with "Да" (Yes) and "Нет" (No) buttons
-    confirm_keyboard = InlineKeyboardMarkup().add(
-        InlineKeyboardButton("Да", callback_data="confirm_yes"),
-        InlineKeyboardButton("Нет", callback_data="confirm_no")
-    )
-
-    await query.message.reply(
-        "Вы уверены, что хотите продолжить?",
-        reply_markup=confirm_keyboard
-    )
-
-    # Define the handler for the user's choice
-    async def handle_confirm(confirmation_query: types.CallbackQuery):
-        await confirmation_query.answer()
-        if confirmation_query.data == "confirm_yes":
-            await confirmation_queue.put(True)
-        elif confirmation_query.data == "confirm_no":
-            await confirmation_queue.put(False)
-
-    # Register the handler for the user's choice
-    dp.register_callback_query_handler(handle_confirm, lambda q: q.message.message_id == query.message.message_id)
-
-    # Wait until the user makes a choice
-    confirmed = await confirmation_queue.get()
-
-    # Unregister the handler after it has been triggered
-    dp.unregister_callback_query_handler(handle_confirm)
-
-    # Return the user's choice (True for "Да" and False for "Нет")
-    return confirmed
-
 async def handle_confirm_yes(query: types.CallbackQuery) -> None:
     await query.answer()
     user = query.from_user
+
+    # Check if the user has already pressed the button
+    if user.id in users_pressed_confirmation_button:
+        await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить 📍геометку, просто отправьте свою Геолокацию ещё раз.")
+        return
+    
+    users_pressed_confirmation_button.add(user.id)
+
     # Get the user's location from the global dictionary using user_id as the key
     location = user_locations.get(user.id)
 
     message_sender = GroupMessageSender(bot)
     await message_sender.send_message_to_group(CHAT_ID, location, user)
+
 async def handle_confirm_no(query: types.CallbackQuery) -> None:
     await query.message.reply("Вы отменили действие по отправке вашей 📍геометки в группу. Если вы захотите стать доступным для клиентов, просто повторно отправьте свою Геолокацию.")
 
