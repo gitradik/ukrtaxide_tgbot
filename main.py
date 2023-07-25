@@ -128,7 +128,7 @@ async def free_btn(query: types.CallbackQuery) -> None:
         
         users_pressed_button.add(user.id)
 
-        send_notification_to_group(query)
+        await send_notification_to_group(query)
         # Call the confirm_free_btn handler to show the confirmation model window
         # await confirm_free_btn(query)
     except Exception as e:
