@@ -91,60 +91,69 @@ async def confirm_free_btn(query: types.CallbackQuery) -> bool:
     return confirmed
 
 async def free_btn(query: types.CallbackQuery) -> None:
-    await query.answer()
-    user = query.from_user
-    
-    # Check if the user not have @username and haven't received the reminder message yet
-    if user.username is None:
-        await query.message.reply("Важное сообщение! ⚠️\n\nДля продолжения работы с ботом необходимо добавить \"имя пользователя\" (также известное как \"username\") в настройках Telegram.\nБез \"имени пользователя\" бот не сможет предоставить вам полный функционал.\nДобавьте \"имя пользователя\" прямо сейчас, чтобы получить все возможности нашего бота!\n\nСпасибо за понимание! 🙏")
-        return
+    try:
+        await query.answer()
+        user = query.from_user
+        
+        # Check if the user not have @username and haven't received the reminder message yet
+        if user.username is None:
+            await query.message.reply("Важное сообщение! ⚠️\n\nДля продолжения работы с ботом необходимо добавить \"имя пользователя\" (также известное как \"username\") в настройках Telegram.\nБез \"имени пользователя\" бот не сможет предоставить вам полный функционал.\nДобавьте \"имя пользователя\" прямо сейчас, чтобы получить все возможности нашего бота!\n\nСпасибо за понимание! 🙏")
+            return
 
-    # Check if the user has already pressed the button
-    if user.id in users_pressed_button:
-        await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить 📍геометку, просто отправьте свою Геолокацию ещё раз.")
-        return
-    
-    users_pressed_button.add(user.id)
+        # Check if the user has already pressed the button
+        if user.id in users_pressed_button:
+            await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить 📍геометку, просто отправьте свою Геолокацию ещё раз.")
+            return
+        
+        users_pressed_button.add(user.id)
 
-    # Call the confirm_free_btn handler to show the confirmation model window
-    await confirm_free_btn(query)
+        # Call the confirm_free_btn handler to show the confirmation model window
+        await confirm_free_btn(query)
+    except Exception as e:
+        # Log the error or handle it appropriately
+        print(f"Error handling callback query in free_btn: {e}")
 
 # Add a new callback query handler to handle the "Да" and "Нет" buttons from the confirmation model window
 async def handle_confirmation(query: types.CallbackQuery) -> None:
-    await query.answer()
-    action = query.data
-    user = query.from_user
+    try:
+        await query.answer()
+        action = query.data
+        user = query.from_user
 
-    if user.id in users_pressed_confirmation_button:
-        return
+        if user.id in users_pressed_confirmation_button:
+            return
 
-    users_pressed_confirmation_button.add(user.id)
+        users_pressed_confirmation_button.add(user.id)
 
-    if action == "confirm_yes":
-        # Get the user's location from the global dictionary using user_id as the key
-        location = user_locations.get(user.id)
+        if action == "confirm_yes":
+            # Get the user's location from the global dictionary using user_id as the key
+            location = user_locations.get(user.id)
 
-        if location:
-            latitude = location['latitude']
-            longitude = location['longitude']
+            if location:
+                latitude = location['latitude']
+                longitude = location['longitude']
 
-            await bot.send_message(
-                chat_id=CHAT_ID,
-                text=f"Привет👋! Я ваш таксист @{user.username}, готов помочь вам с комфортной поездкой 🚕🌟.\n\nПожалуйста, отправьте мне свою Геолокацию из меню 📎, и я приеду к вам! С нетерпением жду возможности вам помочь с перемещением по городу.\nСпасибо за выбор нашего такси-сервиса, и до скорой встречи!😊",
-            )
+                await bot.send_message(
+                    chat_id=CHAT_ID,
+                    text=f"Привет👋! Я ваш таксист @{user.username}, готов помочь вам с комфортной поездкой 🚕🌟.\n\nПожалуйста, отправьте мне свою Геолокацию из меню 📎, и я приеду к вам! С нетерпением жду возможности вам помочь с перемещением по городу.\nСпасибо за выбор нашего такси-сервиса, и до скорой встречи!😊",
+                )
 
-            # Send the location map to the group
-            await bot.send_location(chat_id=CHAT_ID, latitude=latitude, longitude=longitude)
+                # Send the location map to the group
+                await bot.send_location(chat_id=CHAT_ID, latitude=latitude, longitude=longitude)
 
-            await query.message.reply(f"Благодарим вас за предоставленное местоположение.\n\nМы успешно отправили его в группу {CHAT_ID}. Если вы захотите обновить свою 📍геометку в этой группе, просто повторно отправьте свою Геолокацию.")
+                await query.message.reply(f"Благодарим вас за предоставленное местоположение.\n\nМы успешно отправили его в группу {CHAT_ID}. Если вы захотите обновить свою 📍геометку в этой группе, просто повторно отправьте свою Геолокацию.")
+            else:
+                await query.message.reply(f"Простите, {user.mention}, но мы не получили вашего местоположения.\n\nПожалуйста, попробуйте отправить его ещё раз. Если у вас возникнут какие-либо проблемы, вы также можете написать администратору чата @ramal_softdev для помощи.\nМы с нетерпением ждем вашего запроса и готовы предоставить вам отличный сервис! 🚕🌟😊")
+
+        elif action == "confirm_no":
+            await query.message.reply("Вы отменили действие по отправке вашей 📍геометки в группу. Если вы захотите стать доступным для клиентов, просто повторно отправьте свою Геолокацию.")
         else:
-            await query.message.reply(f"Простите, {user.mention}, но мы не получили вашего местоположения.\n\nПожалуйста, попробуйте отправить его ещё раз. Если у вас возникнут какие-либо проблемы, вы также можете написать администратору чата @ramal_softdev для помощи.\nМы с нетерпением ждем вашего запроса и готовы предоставить вам отличный сервис! 🚕🌟😊")
+            # Handle other actions if needed
+            pass
+    except Exception as e:
+        # Log the error or handle it appropriately
+        print(f"Error handling callback query in handle_confirmation: {e}")
 
-    elif action == "confirm_no":
-        await query.message.reply("Вы отменили действие по отправке вышей 📍геометки в группу. Если вы захотите стать доступным для клиентов, просто повторно отправьте свою Геолокацию.")
-    else:
-        # Handle other actions if needed
-        pass
 
 async def on_startup(dp):
     # Set up webhook
