@@ -170,16 +170,16 @@ def main():
 
 
     # test localhost
-    executor.start_polling(dispatcher=dp, skip_updates=True)
+    # executor.start_polling(dispatcher=dp, skip_updates=True)
     # Start the webhook
-    # executor.start_webhook(
-    #     dispatcher=dp,
-    #     webhook_path="/",
-    #     on_startup=on_startup,
-    #     skip_updates=True,
-    #     host=HOST,
-    #     port=PORT,
-    # )
+    executor.start_webhook(
+        dispatcher=dp,
+        webhook_path="/",
+        on_startup=on_startup,
+        skip_updates=True,
+        host=HOST,
+        port=PORT,
+    )
 
 if __name__ == "__main__":
     main()
