@@ -52,6 +52,7 @@ async def handle_location(message: types.Message) -> None:
         await message.reply(f"Простите, {user.mention}, но мы не можем получить доступ к вашему местоположению.\n\n Пожалуйста, свяжитесь с администратором чата @ramal_softdev для помощи. Будем ждать вашего обращения и надеемся, что сможем предоставить вам нашу услугу такси в ближайшее время. \n Спасибо за понимание! 🚕🌟😊")
 
 
+@dp.callback_query_handler(lambda query: query.data == 'confirm_yes')
 async def handle_confirm_yes(query: types.CallbackQuery) -> None:
     await query.answer()
     user = query.from_user
@@ -69,6 +70,8 @@ async def handle_confirm_yes(query: types.CallbackQuery) -> None:
     message_sender = GroupMessageSender(bot)
     await message_sender.send_message_to_group(CHAT_ID, location, user)
 
+
+@dp.callback_query_handler(lambda query: query.data == 'confirm_no')
 async def handle_confirm_no(query: types.CallbackQuery) -> None:
     await query.answer()
     user = query.from_user
@@ -77,9 +80,6 @@ async def handle_confirm_no(query: types.CallbackQuery) -> None:
     
     users_pressed_confirmation_button.add(user.id)
 
-# async def free_btn(query: types.CallbackQuery):
-#     # Send a pop-up notification to the user
-#     await query.answer('This is a pop-up notification!', show_alert=True)
 
 @dp.callback_query_handler(lambda query: query.data == 'free')
 async def free_btn(query: types.CallbackQuery) -> None:
@@ -132,8 +132,8 @@ def main():
     # dp.register_callback_query_handler(free_btn, text="free")
 
     # Add handler for the "Да" (Yes) and "Нет" (No) buttons from the confirmation model window
-    dp.register_callback_query_handler(handle_confirm_yes, text="confirm_yes")
-    dp.register_callback_query_handler(handle_confirm_no, text="confirm_no")
+    # dp.register_callback_query_handler(handle_confirm_yes, text="confirm_yes")
+    # dp.register_callback_query_handler(handle_confirm_no, text="confirm_no")
 
 
     # test localhost
