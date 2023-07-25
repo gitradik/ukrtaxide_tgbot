@@ -1,5 +1,4 @@
 import os
-import asyncio
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -17,40 +16,10 @@ bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
 # Global dictionary to store user locations
-user_locations = {}
-
-async def start(message: types.Message) -> None:
-    user = message.from_user
-    await message.reply(fr"Привет, {user.mention}! Если вы планируете предоставлять услуги такси, пожалуйста, отправьте нам свою Геолокацию из меню 📎.")
-    
+user_locations = {}    
 # Create a map to store user IDs who have already pressed the button
 users_pressed_button = set()
 users_pressed_confirmation_button = set()
-
-async def handle_location(message: types.Message) -> None:
-    user = message.from_user
-    if message.location:
-        latitude = message.location.latitude
-        longitude = message.location.longitude
-
-        if user.id in users_pressed_button:
-            users_pressed_button.remove(user.id)
-        if user.id in users_pressed_confirmation_button:
-            users_pressed_confirmation_button.remove(user.id)
-            
-        # Save the location in the global dictionary using user_id as the key
-        user_locations[user.id] = {'latitude': latitude, 'longitude': longitude}
-        
-        keyboard_free = InlineKeyboardMarkup().add(InlineKeyboardButton("Свободен", callback_data="free"))
-
-
-        await message.reply(
-            f"Привет, {user.mention}! Если у вас есть возможность начать работать, пожалуйста, нажмите на кнопку [Свободен] ниже, чтобы поделиться своей Геолокацией. \n\n Так мы сможем отправить вашу 📍геометку в нужную группу, чтобы люди могли воспользоваться вашим такси-сервисом. \n Спасибо за вашу готовность помочь! 🚕🌟",
-            reply_markup=keyboard_free,
-        )
-    else:
-        await message.reply(f"Простите, {user.mention}, но мы не можем получить доступ к вашему местоположению.\n\n Пожалуйста, свяжитесь с администратором чата @ramal_softdev для помощи. Будем ждать вашего обращения и надеемся, что сможем предоставить вам нашу услугу такси в ближайшее время. \n Спасибо за понимание! 🚕🌟😊")
-
 
 @dp.callback_query_handler(lambda query: query.data == 'confirm_yes')
 async def handle_confirm_yes(query: types.CallbackQuery) -> None:
@@ -70,7 +39,6 @@ async def handle_confirm_yes(query: types.CallbackQuery) -> None:
     message_sender = GroupMessageSender(bot)
     await message_sender.send_message_to_group(CHAT_ID, location, user)
 
-
 @dp.callback_query_handler(lambda query: query.data == 'confirm_no')
 async def handle_confirm_no(query: types.CallbackQuery) -> None:
     await query.answer()
@@ -79,7 +47,6 @@ async def handle_confirm_no(query: types.CallbackQuery) -> None:
     await query.message.reply("Вы отменили действие по отправке вашей 📍геометки в группу. Если вы захотите стать доступным для клиентов, просто повторно отправьте свою Геолокацию.")
     
     users_pressed_confirmation_button.add(user.id)
-
 
 @dp.callback_query_handler(lambda query: query.data == 'free')
 async def free_btn(query: types.CallbackQuery) -> None:
@@ -113,29 +80,43 @@ async def free_btn(query: types.CallbackQuery) -> None:
         # Log the error or handle it appropriately
         print(f"Error handling callback query in free_btn: {e}")
 
+@dp.message_handler(content_types=types.ContentTypes.LOCATION)
+async def handle_location(message: types.Message) -> None:
+    user = message.from_user
+    if message.location:
+        latitude = message.location.latitude
+        longitude = message.location.longitude
 
+        if user.id in users_pressed_button:
+            users_pressed_button.remove(user.id)
+        if user.id in users_pressed_confirmation_button:
+            users_pressed_confirmation_button.remove(user.id)
+            
+        # Save the location in the global dictionary using user_id as the key
+        user_locations[user.id] = {'latitude': latitude, 'longitude': longitude}
+        
+        keyboard_free = InlineKeyboardMarkup().add(InlineKeyboardButton("Свободен", callback_data="free"))
+
+
+        await message.reply(
+            f"Привет, {user.mention}! Если у вас есть возможность начать работать, пожалуйста, нажмите на кнопку [Свободен] ниже, чтобы поделиться своей Геолокацией. \n\n Так мы сможем отправить вашу 📍геометку в нужную группу, чтобы люди могли воспользоваться вашим такси-сервисом. \n Спасибо за вашу готовность помочь! 🚕🌟",
+            reply_markup=keyboard_free,
+        )
+    else:
+        await message.reply(f"Простите, {user.mention}, но мы не можем получить доступ к вашему местоположению.\n\n Пожалуйста, свяжитесь с администратором чата @ramal_softdev для помощи. Будем ждать вашего обращения и надеемся, что сможем предоставить вам нашу услугу такси в ближайшее время. \n Спасибо за понимание! 🚕🌟😊")
 
 async def on_startup(dp):
     # Set up webhook
     await bot.delete_webhook()
     await bot.set_webhook(url=WEBHOOK)  # Replace with your Heroku app URL
 
+# Add handler for the start command
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message) -> None:
+    user = message.from_user
+    await message.reply(fr"Привет, {user.mention}! Если вы планируете предоставлять услуги такси, пожалуйста, отправьте нам свою Геолокацию из меню 📎.")
 
-def main():
-    # Add handler for the start command
-    dp.register_message_handler(start, commands=["start"])
-
-    # Add handler for the location message
-    dp.register_message_handler(handle_location, content_types=types.ContentTypes.LOCATION)
-
-    # Add handler for the "Свободен" button
-    # dp.register_callback_query_handler(free_btn, text="free")
-
-    # Add handler for the "Да" (Yes) and "Нет" (No) buttons from the confirmation model window
-    # dp.register_callback_query_handler(handle_confirm_yes, text="confirm_yes")
-    # dp.register_callback_query_handler(handle_confirm_no, text="confirm_no")
-
-
+if __name__ == "__main__":
     # test localhost
     # executor.start_polling(dispatcher=dp, skip_updates=True)
     # Start the webhook
@@ -147,6 +128,3 @@ def main():
         host=HOST,
         port=PORT,
     )
-
-if __name__ == "__main__":
-    main()
