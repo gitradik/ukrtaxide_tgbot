@@ -70,8 +70,12 @@ async def handle_confirm_yes(query: types.CallbackQuery) -> None:
     await message_sender.send_message_to_group(CHAT_ID, location, user)
 
 async def handle_confirm_no(query: types.CallbackQuery) -> None:
-    await query.message.reply("Вы отменили действие по отправке вашей 📍геометки в группу. Если вы захотите стать доступным для клиентов, просто повторно отправьте свою Геолокацию.")
+    await query.answer()
+    user = query.from_user
 
+    await query.message.reply("Вы отменили действие по отправке вашей 📍геометки в группу. Если вы захотите стать доступным для клиентов, просто повторно отправьте свою Геолокацию.")
+    
+    users_pressed_confirmation_button.add(user.id)
     
 async def free_btn(query: types.CallbackQuery) -> None:
     try:
