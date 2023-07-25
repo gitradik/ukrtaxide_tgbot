@@ -51,8 +51,6 @@ async def handle_location(message: types.Message) -> None:
 
 
 async def confirm_free_btn(query: types.CallbackQuery) -> bool:
-    await query.answer()
-
     # Create a queue to pass the user's confirmation choice
     confirmation_queue = asyncio.Queue()
 
@@ -73,9 +71,6 @@ async def confirm_free_btn(query: types.CallbackQuery) -> bool:
         if confirmation_query.data == "confirm_yes":
             await confirmation_queue.put(True)
         elif confirmation_query.data == "confirm_no":
-            await confirmation_queue.put(False)
-        else:
-            # Handle other actions if needed
             await confirmation_queue.put(False)
 
     # Register the handler for the user's choice
