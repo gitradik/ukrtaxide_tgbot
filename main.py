@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.exceptions import InvalidQueryID
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
@@ -58,7 +59,11 @@ async def free_btn(query: types.CallbackQuery) -> None:
         users_pressed_button_without_username.add(user.id)
         return
     elif user.id not in users_pressed_button_without_username:
-        users_pressed_button_without_username.remove(user.id)
+        try:
+            users_pressed_button_without_username.remove(user.id)
+        except InvalidQueryID as e:
+            # Handle the exception here, such as retrying the query or notifying the user
+            print(f"Error: {e}")
 
     users_pressed_button[user.id] += 1
     
