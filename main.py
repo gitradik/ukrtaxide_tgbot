@@ -76,7 +76,12 @@ async def handle_confirm_no(query: types.CallbackQuery) -> None:
     await query.message.reply("Вы отменили действие по отправке вашей 📍геометки в группу. Если вы захотите стать доступным для клиентов, просто повторно отправьте свою Геолокацию.")
     
     users_pressed_confirmation_button.add(user.id)
-    
+
+# async def free_btn(query: types.CallbackQuery):
+#     # Send a pop-up notification to the user
+#     await query.answer('This is a pop-up notification!', show_alert=True)
+
+@dp.callback_query_handler(lambda query: query.data == 'free')
 async def free_btn(query: types.CallbackQuery) -> None:
     try:
         await query.answer()
@@ -124,7 +129,7 @@ def main():
     dp.register_message_handler(handle_location, content_types=types.ContentTypes.LOCATION)
 
     # Add handler for the "Свободен" button
-    dp.register_callback_query_handler(free_btn, text="free")
+    # dp.register_callback_query_handler(free_btn, text="free")
 
     # Add handler for the "Да" (Yes) and "Нет" (No) buttons from the confirmation model window
     dp.register_callback_query_handler(handle_confirm_yes, text="confirm_yes")
