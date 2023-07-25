@@ -105,19 +105,20 @@ async def handle_location(message: types.Message) -> None:
     else:
         await message.reply(f"Простите, {user.mention}, но мы не можем получить доступ к вашему местоположению.\n\n Пожалуйста, свяжитесь с администратором чата @ramal_softdev для помощи. Будем ждать вашего обращения и надеемся, что сможем предоставить вам нашу услугу такси в ближайшее время. \n Спасибо за понимание! 🚕🌟😊")
 
-async def on_startup(dp):
-    # Set up webhook
-    await bot.delete_webhook()
-    await bot.set_webhook(url=WEBHOOK)  # Replace with your Heroku app URL
-
 # Add handler for the start command
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message) -> None:
     user = message.from_user
     await message.reply(fr"Привет, {user.mention}! Если вы планируете предоставлять услуги такси, пожалуйста, отправьте нам свою Геолокацию из меню 📎.")
 
+async def on_startup(dp):
+    # Set up webhook
+    await bot.delete_webhook()
+    # Replace with your Heroku app URL
+    await bot.set_webhook(url=WEBHOOK)
+
 if __name__ == "__main__":
-    # test localhost
+    # For localhost
     # executor.start_polling(dispatcher=dp, skip_updates=True)
     # Start the webhook
     executor.start_webhook(
