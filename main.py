@@ -111,6 +111,7 @@ async def free_btn(query: types.CallbackQuery) -> None:
 # Add a new callback query handler to handle the "Да" and "Нет" buttons from the confirmation model window
 async def handle_confirmation(query: types.CallbackQuery) -> None:
     try:
+        await query.answer()
         action = query.data
         user = query.from_user
 
