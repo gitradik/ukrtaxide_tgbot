@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from GroupNotifier import GroupMessageSender
+
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
 WEBHOOK = os.getenv('TG_WEBHOOK')
@@ -86,31 +88,6 @@ async def confirm_free_btn(query: types.CallbackQuery) -> bool:
     # Return the user's choice (True for "Да" and False for "Нет")
     return confirmed
 
-async def send_notification_to_group(query: types.CallbackQuery) -> None:
-    try:
-        user = query.from_user
-
-        # Get the user's location from the global dictionary using user_id as the key
-        location = user_locations.get(user.id)
-
-        if location:
-            latitude = location['latitude']
-            longitude = location['longitude']
-
-            await bot.send_message(
-                chat_id=CHAT_ID,
-                text=f"Привет👋! Я ваш таксист @{user.username}, готов помочь вам с комфортной поездкой 🚕🌟.\n\nПожалуйста, отправьте мне свою Геолокацию из меню 📎, и я приеду к вам! С нетерпением жду возможности вам помочь с перемещением по городу.\nСпасибо за выбор нашего такси-сервиса, и до скорой встречи!😊",
-            )
-
-            # Send the location map to the group
-            await bot.send_location(chat_id=CHAT_ID, latitude=latitude, longitude=longitude)
-
-            await query.message.reply(f"Благодарим вас за предоставленное местоположение.\n\nМы успешно отправили его в группу {CHAT_ID}. Если вы захотите обновить свою 📍геометку в этой группе, просто повторно отправьте свою Геолокацию.")
-        else:
-            await query.message.reply(f"Простите, {user.mention}, но мы не получили вашего местоположения.\n\nПожалуйста, попробуйте отправить его ещё раз. Если у вас возникнут какие-либо проблемы, вы также можете написать администратору чата @ramal_softdev для помощи.\nМы с нетерпением ждем вашего запроса и готовы предоставить вам отличный сервис! 🚕🌟😊")
-    except Exception as e:
-        # Log the error or handle it appropriately
-        print(f"Error handling callback query in free_btn: {e}")
 async def free_btn(query: types.CallbackQuery) -> None:
     try:
         await query.answer()
@@ -128,7 +105,11 @@ async def free_btn(query: types.CallbackQuery) -> None:
         
         users_pressed_button.add(user.id)
 
-        await send_notification_to_group(query)
+        # Get the user's location from the global dictionary using user_id as the key
+        location = user_locations.get(user.id)
+
+        message_sender = GroupMessageSender(bot)
+        await message_sender.send_message_to_group(CHAT_ID, location, user)
         # Call the confirm_free_btn handler to show the confirmation model window
         # await confirm_free_btn(query)
     except Exception as e:
