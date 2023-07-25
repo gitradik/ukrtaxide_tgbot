@@ -86,25 +86,9 @@ async def confirm_free_btn(query: types.CallbackQuery) -> bool:
     # Return the user's choice (True for "Да" and False for "Нет")
     return confirmed
 
-async def free_btn(query: types.CallbackQuery) -> None:
+async def send_notification_to_group(query: types.CallbackQuery) -> None:
     try:
-        await query.answer()
         user = query.from_user
-        
-        # Check if the user not have @username and haven't received the reminder message yet
-        if user.username is None:
-            await query.message.reply("Важное сообщение! ⚠️\n\nДля продолжения работы с ботом необходимо добавить \"имя пользователя\" (также известное как \"username\") в настройках Telegram.\nБез \"имени пользователя\" бот не сможет предоставить вам полный функционал.\nДобавьте \"имя пользователя\" прямо сейчас, чтобы получить все возможности нашего бота!\n\nСпасибо за понимание! 🙏")
-            return
-
-        # Check if the user has already pressed the button
-        if user.id in users_pressed_button:
-            await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить 📍геометку, просто отправьте свою Геолокацию ещё раз.")
-            return
-        
-        users_pressed_button.add(user.id)
-
-        # Call the confirm_free_btn handler to show the confirmation model window
-        # await confirm_free_btn(query)
 
         # Get the user's location from the global dictionary using user_id as the key
         location = user_locations.get(user.id)
@@ -124,7 +108,29 @@ async def free_btn(query: types.CallbackQuery) -> None:
             await query.message.reply(f"Благодарим вас за предоставленное местоположение.\n\nМы успешно отправили его в группу {CHAT_ID}. Если вы захотите обновить свою 📍геометку в этой группе, просто повторно отправьте свою Геолокацию.")
         else:
             await query.message.reply(f"Простите, {user.mention}, но мы не получили вашего местоположения.\n\nПожалуйста, попробуйте отправить его ещё раз. Если у вас возникнут какие-либо проблемы, вы также можете написать администратору чата @ramal_softdev для помощи.\nМы с нетерпением ждем вашего запроса и готовы предоставить вам отличный сервис! 🚕🌟😊")
+    except Exception as e:
+        # Log the error or handle it appropriately
+        print(f"Error handling callback query in free_btn: {e}")
+async def free_btn(query: types.CallbackQuery) -> None:
+    try:
+        await query.answer()
+        user = query.from_user
+        
+        # Check if the user not have @username and haven't received the reminder message yet
+        if user.username is None:
+            await query.message.reply("Важное сообщение! ⚠️\n\nДля продолжения работы с ботом необходимо добавить \"имя пользователя\" (также известное как \"username\") в настройках Telegram.\nБез \"имени пользователя\" бот не сможет предоставить вам полный функционал.\nДобавьте \"имя пользователя\" прямо сейчас, чтобы получить все возможности нашего бота!\n\nСпасибо за понимание! 🙏")
+            return
 
+        # Check if the user has already pressed the button
+        if user.id in users_pressed_button:
+            await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить 📍геометку, просто отправьте свою Геолокацию ещё раз.")
+            return
+        
+        users_pressed_button.add(user.id)
+
+        send_notification_to_group(query)
+        # Call the confirm_free_btn handler to show the confirmation model window
+        # await confirm_free_btn(query)
     except Exception as e:
         # Log the error or handle it appropriately
         print(f"Error handling callback query in free_btn: {e}")
