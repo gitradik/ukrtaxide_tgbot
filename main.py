@@ -81,7 +81,7 @@ async def confirm_free_btn(query: types.CallbackQuery) -> bool:
     confirmed = await confirmation_queue.get()
 
     # Unregister the handler after it has been triggered
-    # dp.unregister_callback_query_handler(handle_confirmation)
+    dp.unregister_callback_query_handler(handle_confirmation)
 
     # Return the user's choice (True for "Да" and False for "Нет")
     return confirmed
@@ -187,11 +187,11 @@ def main():
     # Add handler for the "Свободен" button
     dp.register_callback_query_handler(free_btn, text="free")
     # Add handler for the confirmation of the "Свободен" button
-    dp.register_callback_query_handler(confirm_free_btn, text="confirm_free")
+    # dp.register_callback_query_handler(confirm_free_btn, text="confirm_free")
 
     # Add handler for the "Да" (Yes) and "Нет" (No) buttons from the confirmation model window
-    # dp.register_callback_query_handler(handle_confirmation, text="confirm_yes")
-    # dp.register_callback_query_handler(handle_confirmation, text="confirm_no")
+    dp.register_callback_query_handler(handle_confirmation, text="confirm_yes")
+    dp.register_callback_query_handler(handle_confirmation, text="confirm_no")
 
 
     # test localhost
