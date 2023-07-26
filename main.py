@@ -1,15 +1,19 @@
 import os
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, executor
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from GroupNotifier import GroupMessageSender
+
 from MessageManager import MessageManager
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
 WEBHOOK = os.getenv('TG_WEBHOOK')
-CHAT_ID = os.getenv('TG_CHAT_ID')
+
+BREMEN_CHAT_ID = os.getenv('TG_BREMEN_CHAT_ID')
+ODESA_CHAT_ID = os.getenv('TG_ODESA_CHAT_ID')
+ZAPORIZHHZIA_CHAT_ID = os.getenv('TG_ZAPORIZHHZIA_CHAT_ID')
+
 HOST = os.getenv('HOST')
 PORT = int(os.environ.get('PORT', 80))
 
@@ -23,6 +27,14 @@ user_locations = {}
 # Create a map to store user IDs who have already pressed the button
 users_pressed_button = set()
 users_pressed_confirmation_button = set()
+# Define group options
+group_options = [
+    {"chat_id": BREMEN_CHAT_ID, "name": "Bremen🇩🇪 | Ukraine Taxi🇺🇦"},
+    {"chat_id": ODESA_CHAT_ID, "name": "Odesa | Ukraine Taxi🇺🇦"},
+    {"chat_id": ZAPORIZHHZIA_CHAT_ID, "name": "Zaporizhzhia | Ukraine Taxi🇺🇦"},
+]
+users_group = {}
+
 
 @dp.callback_query_handler(lambda query: query.data == 'confirm_yes')
 async def handle_confirm_yes(query: types.CallbackQuery) -> None:
@@ -39,9 +51,8 @@ async def handle_confirm_yes(query: types.CallbackQuery) -> None:
     # Get the user's location from the global dictionary using user_id as the key
     location = user_locations.get(user.id)
 
-    message_sender = GroupMessageSender(bot)
-    await message_sender.send_message_to_group(CHAT_ID, location, user)
-
+    message_sender = GroupMessageSender(bot, users_group)
+    await message_sender.send_message_to_group(location, user)
 @dp.callback_query_handler(lambda query: query.data == 'confirm_no')
 async def handle_confirm_no(query: types.CallbackQuery) -> None:
     await query.answer()
@@ -112,7 +123,47 @@ async def handle_location(message: types.Message) -> None:
 async def start(message: types.Message) -> None:
     user = message.from_user
 
+    continue_keyboard = InlineKeyboardMarkup().add(InlineKeyboardButton("Продолжить", callback_data="continue"))
+    await message.reply(message_manager.get_message('continue', 'ua', user_mention=f"{user.mention}"), reply_markup=continue_keyboard)
+
+@dp.message_handler(lambda message: message.text in [group['name'] for group in group_options])
+async def handle_group_selection(message: types.Message) -> None:
+    user = message.from_user
+    selected_group_name = message.text
+
+    # Find the selected group's chat_id based on its name
+    selected_group = next((group for group in group_options if group['name'] == selected_group_name), None)
+
+    if not selected_group:
+        print("Invalid group selection.")
+        return
+
+    # Store the selected group's chat_id in the users_group dictionary
+    users_group[user.id] = selected_group['chat_id']
+
+    await message.reply(message_manager.get_message('group_selection', 'ua', group_name=f"{selected_group_name}"))
     await message.reply(message_manager.get_message('start', 'ua', user_mention=f"{user.mention}"))
+
+
+# Function to handle the "Продолжить" (Continue) button press
+@dp.callback_query_handler(lambda query: query.data == 'continue')
+async def handle_continue_button(query: types.CallbackQuery) -> None:
+    try:
+        await query.answer()
+
+        keyboard_group = ReplyKeyboardMarkup(
+            keyboard=[[group['name']] for group in group_options],
+            resize_keyboard=True,
+            one_time_keyboard=True
+        )
+        await query.message.reply(
+            message_manager.get_message('continue_sub', 'ua'),
+            reply_markup=keyboard_group
+        )
+    except Exception as e:
+        # Log the error or handle it appropriately
+        print(f"Error handling callback query in handle_continue_button: {e}")
+
 
 async def on_startup(dp):
     # Set up webhook
@@ -121,8 +172,6 @@ async def on_startup(dp):
     await bot.set_webhook(url=WEBHOOK)
 
 if __name__ == "__main__":
-    # For localhost
-    # executor.start_polling(dispatcher=dp, skip_updates=True)
     # Start the webhook
     executor.start_webhook(
         dispatcher=dp,
@@ -132,3 +181,9 @@ if __name__ == "__main__":
         host=HOST,
         port=PORT,
     )
+
+    # For localhost, use polling
+    # executor.start_polling(dispatcher=dp, skip_updates=True)
+
+    # For deployment with webhook, comment out start_polling and uncomment start_webhook
+    # Remember to set up the on_startup function accordingly for the webhook method.
