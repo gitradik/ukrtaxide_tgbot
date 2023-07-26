@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from GroupNotifier import GroupMessageSender
 
-from MessageManager import MessageManager
+from MessageManager import LangEnum, MessageManager
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
@@ -30,12 +30,20 @@ users_pressed_button = set()
 users_pressed_confirmation_button = set()
 # Define group options
 group_options = [
-    {"chat_id": BREMEN_CHAT_ID, "name": "Bremen🇩🇪 | Ukraine Taxi🇺🇦"},
-    {"chat_id": ODESA_CHAT_ID, "name": "Odesa | Ukraine Taxi🇺🇦"},
+    {"chat_id": ODESA_CHAT_ID, "name": "Odesa | Ukraine🇺🇦 Taxi🚕"},
     {"chat_id": DNIPRO_CHAT_ID, "name": "Dnipro | Ukraine🇺🇦 Taxi🚕"},
-    {"chat_id": ZAPORIZHHZIA_CHAT_ID, "name": "Zaporizhzhia | Ukraine Taxi🇺🇦"},
+    {"chat_id": ZAPORIZHHZIA_CHAT_ID, "name": "Zaporizhzhia | Ukraine🇺🇦 Taxi🚕"},
+    # {"chat_id": BREMEN_CHAT_ID, "name": "Bremen🇩🇪 | Ukraine🇺🇦 Taxi🚕"},
 ]
 users_group = {}
+# Define lang options
+lang_options = [
+    {"id":LangEnum.EN, "name": "English"},
+    {"id":LangEnum.UA, "name": "Українська"},
+    {"id":LangEnum.RU, "name": "Русский"}
+]
+users_lang = {}
+
 
 
 @dp.callback_query_handler(lambda query: query.data == 'confirm_yes')
@@ -45,7 +53,7 @@ async def handle_confirm_yes(query: types.CallbackQuery) -> None:
 
     # Check if the user has already pressed the button
     if user.id in users_pressed_confirmation_button:
-        await query.message.reply(message_manager.get_message('already_pressed_free_button', 'ua'))
+        await query.message.reply(message_manager.get_message('already_pressed_free_button'))
         return
     
     users_pressed_confirmation_button.add(user.id)
@@ -53,14 +61,14 @@ async def handle_confirm_yes(query: types.CallbackQuery) -> None:
     # Get the user's location from the global dictionary using user_id as the key
     location = user_locations.get(user.id)
 
-    message_sender = GroupMessageSender(bot, users_group)
+    message_sender = GroupMessageSender(bot, users_group, message_manager)
     await message_sender.send_message_to_group(location, user)
 @dp.callback_query_handler(lambda query: query.data == 'confirm_no')
 async def handle_confirm_no(query: types.CallbackQuery) -> None:
     await query.answer()
     user = query.from_user
 
-    await query.message.reply(message_manager.get_message('confirm_continue_no', 'ua'))
+    await query.message.reply(message_manager.get_message('confirm_continue_no'))
     
     users_pressed_confirmation_button.add(user.id)
 
@@ -72,23 +80,23 @@ async def handle_free_button(query: types.CallbackQuery) -> None:
         
         # Check if the user not have @username and haven't received the reminder message yet
         if user.username is None:
-            await query.message.reply(message_manager.get_message('username_important', 'ua'))
+            await query.message.reply(message_manager.get_message('username_important'))
             return
 
         # Check if the user has already pressed the button
         if user.id in users_pressed_button:
-            await query.message.reply(message_manager.get_message('already_pressed_free_button', 'ua'))
+            await query.message.reply(message_manager.get_message('already_pressed_free_button'))
             return
         
         users_pressed_button.add(user.id)
         
          # Create an InlineKeyboardMarkup with "Да" (Yes) and "Нет" (No) buttons
         confirm_keyboard = InlineKeyboardMarkup().add(
-            InlineKeyboardButton(message_manager.get_message('confirm_yes', 'ua'), callback_data="confirm_yes"),
-            InlineKeyboardButton(message_manager.get_message('confirm_no', 'ua'), callback_data="confirm_no")
+            InlineKeyboardButton(message_manager.get_message('confirm_yes'), callback_data="confirm_yes"),
+            InlineKeyboardButton(message_manager.get_message('confirm_no'), callback_data="confirm_no")
         )
 
-        await query.message.reply(message_manager.get_message('confirm_continue', 'ua'), reply_markup=confirm_keyboard)
+        await query.message.reply(message_manager.get_message('confirm_continue'), reply_markup=confirm_keyboard)
     except Exception as e:
         # Log the error or handle it appropriately
         print(f"Error handling callback query in handle_free_button: {e}")
@@ -96,6 +104,10 @@ async def handle_free_button(query: types.CallbackQuery) -> None:
 @dp.message_handler(content_types=types.ContentTypes.LOCATION)
 async def handle_location(message: types.Message) -> None:
     user = message.from_user
+
+    if not users_group.get(user.id):
+        return
+    
     if message.location:
         latitude = message.location.latitude
         longitude = message.location.longitude
@@ -109,16 +121,16 @@ async def handle_location(message: types.Message) -> None:
         user_locations[user.id] = {'latitude': latitude, 'longitude': longitude}
         
         keyboard_free = InlineKeyboardMarkup().add(InlineKeyboardButton(
-            message_manager.get_message('free', 'ua', user_mention=f"{user.mention}"),
+            message_manager.get_message('free', user_mention=user.mention),
             callback_data="free")
         )
  
         await message.reply(
-            message_manager.get_message('start_working', 'ua'),
+            message_manager.get_message('start_working'),
             reply_markup=keyboard_free
         )
     else:
-        await message.reply(message_manager.get_message('no_access_location', 'ua', user_mention=f"{user.mention}"))
+        await message.reply(message_manager.get_message('no_access_location', user_mention=user.mention))
 
 # Add handler for the start command
 @dp.message_handler(commands=['start'])
@@ -126,7 +138,39 @@ async def start(message: types.Message) -> None:
     user = message.from_user
 
     continue_keyboard = InlineKeyboardMarkup().add(InlineKeyboardButton("Продолжить", callback_data="continue"))
-    await message.reply(message_manager.get_message('continue', 'ua', user_mention=f"{user.mention}"), reply_markup=continue_keyboard)
+    await message.reply(message_manager.get_message('continue', user_mention=f"{user.mention}"), reply_markup=continue_keyboard)
+# Add handler for the setlang command
+@dp.message_handler(commands=['setlang'])
+async def start(message: types.Message) -> None:
+    user = message.from_user
+    keyboard_lang = ReplyKeyboardMarkup(
+        keyboard=[[lang['name']] for lang in lang_options],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+    await message.reply(
+        message_manager.get_message('choose_lang'),
+        reply_markup=keyboard_lang
+    )
+@dp.message_handler(lambda message: message.text in [lang['name'] for lang in lang_options])
+async def handle_lang_selection(message: types.Message) -> None:
+    user = message.from_user
+    selected_lang_name = message.text
+
+    # Find the selected lang's chat_id based on its name
+    selected_lang = next((lang for lang in lang_options if lang['name'] == selected_lang_name), None)
+
+    if not selected_lang:
+        print("Invalid lang selection.")
+        return
+
+    message_manager.change_lang(selected_lang['id'])
+    print(message_manager.lang)
+    # Store the selected lang's chat_id in the users_group dictionary
+    # users_lang[user.id] = selected_lang['id']
+
+    await message.reply(message_manager.get_message('lang_selection', lang_name=f"{selected_lang_name}"))
+
 
 @dp.message_handler(lambda message: message.text in [group['name'] for group in group_options])
 async def handle_group_selection(message: types.Message) -> None:
@@ -143,8 +187,8 @@ async def handle_group_selection(message: types.Message) -> None:
     # Store the selected group's chat_id in the users_group dictionary
     users_group[user.id] = selected_group['chat_id']
 
-    await message.reply(message_manager.get_message('group_selection', 'ua', group_name=f"{selected_group_name}"))
-    await message.reply(message_manager.get_message('start', 'ua', user_mention=f"{user.mention}"))
+    await message.reply(message_manager.get_message('group_selection', group_name=f"{selected_group_name}"))
+    await message.reply(message_manager.get_message('start', user_mention=f"{user.mention}"))
 
 
 # Function to handle the "Продолжить" (Continue) button press
@@ -159,7 +203,7 @@ async def handle_continue_button(query: types.CallbackQuery) -> None:
             one_time_keyboard=True
         )
         await query.message.reply(
-            message_manager.get_message('continue_sub', 'ua'),
+            message_manager.get_message('subcontinue'),
             reply_markup=keyboard_group
         )
     except Exception as e:
@@ -175,17 +219,17 @@ async def on_startup(dp):
 
 if __name__ == "__main__":
     # Start the webhook
-    executor.start_webhook(
-        dispatcher=dp,
-        webhook_path="/",
-        on_startup=on_startup,
-        skip_updates=True,
-        host=HOST,
-        port=PORT,
-    )
+    # executor.start_webhook(
+    #     dispatcher=dp,
+    #     webhook_path="/",
+    #     on_startup=on_startup,
+    #     skip_updates=True,
+    #     host=HOST,
+    #     port=PORT,
+    # )
 
     # For localhost, use polling
-    # executor.start_polling(dispatcher=dp, skip_updates=True)
+    executor.start_polling(dispatcher=dp, skip_updates=True)
 
     # For deployment with webhook, comment out start_polling and uncomment start_webhook
     # Remember to set up the on_startup function accordingly for the webhook method.

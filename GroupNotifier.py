@@ -11,11 +11,10 @@ class GroupNotifier(ABC):
 
 
 class GroupMessageSender(GroupNotifier):
-    message_manager = MessageManager()
-
-    def __init__(self, bot: Bot, users_group: dict):
+    def __init__(self, bot: Bot, users_group: dict, message_manager: MessageManager):
         self.bot = bot
         self.users_group = users_group  # Store users_group as an instance variable
+        self.message_manager = message_manager
 
     async def send_message_to_group(self, location: dict, user: types.User) -> None:
         try:
@@ -29,7 +28,7 @@ class GroupMessageSender(GroupNotifier):
                 # Send the message to the group
                 await self.bot.send_message(
                     chat_id=chat_id,
-                    text=self.message_manager.get_message('driver_in_group', 'ua', username=user.username)
+                    text=self.message_manager.get_message('driver_in_group', username=user.username)
                 )
                 # Send the location map to the group
                 await self.bot.send_location(chat_id=chat_id, latitude=latitude, longitude=longitude)
@@ -37,7 +36,7 @@ class GroupMessageSender(GroupNotifier):
                 # Send the message to chat bot
                 await self.bot.send_message(
                     chat_id=user.id,
-                    text=self.message_manager.get_message('thanks_for_location', 'ua', chat_id=chat_id)
+                    text=self.message_manager.get_message('thanks_for_location', chat_id=chat_id)
                 )
         except Exception as e:
             # Log the error or handle it appropriately
