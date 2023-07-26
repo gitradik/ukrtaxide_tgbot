@@ -13,6 +13,7 @@ WEBHOOK = os.getenv('TG_WEBHOOK')
 BREMEN_CHAT_ID = os.getenv('TG_BREMEN_CHAT_ID')
 ODESA_CHAT_ID = os.getenv('TG_ODESA_CHAT_ID')
 ZAPORIZHHZIA_CHAT_ID = os.getenv('TG_ZAPORIZHHZIA_CHAT_ID')
+DNIPRO_CHAT_ID = os.getenv('TG_DNIPRO_CHAT_ID')
 
 HOST = os.getenv('HOST')
 PORT = int(os.environ.get('PORT', 80))
@@ -31,6 +32,7 @@ users_pressed_confirmation_button = set()
 group_options = [
     {"chat_id": BREMEN_CHAT_ID, "name": "Bremen🇩🇪 | Ukraine Taxi🇺🇦"},
     {"chat_id": ODESA_CHAT_ID, "name": "Odesa | Ukraine Taxi🇺🇦"},
+    {"chat_id": DNIPRO_CHAT_ID, "name": "Dnipro | Ukraine🇺🇦 Taxi🚕"},
     {"chat_id": ZAPORIZHHZIA_CHAT_ID, "name": "Zaporizhzhia | Ukraine Taxi🇺🇦"},
 ]
 users_group = {}
