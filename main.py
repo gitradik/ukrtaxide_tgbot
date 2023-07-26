@@ -171,9 +171,6 @@ async def handle_lang_selection(message: types.Message) -> None:
         return
 
     message_manager.change_lang(selected_lang['id'])
-    print(message_manager.lang)
-    # Store the selected lang's chat_id in the users_group dictionary
-    # users_lang[user.id] = selected_lang['id']
 
     await message.reply(message_manager.get_message('lang_selection', lang_name=f"{selected_lang_name}"))
 
