@@ -1,6 +1,8 @@
 from aiogram import Bot, types
 from abc import ABC, abstractmethod
 
+from MessageManager import MessageManager
+
 class GroupNotifier(ABC):
 
     @abstractmethod
@@ -9,6 +11,7 @@ class GroupNotifier(ABC):
 
 
 class GroupMessageSender(GroupNotifier):
+    message_manager = MessageManager()
 
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -20,7 +23,7 @@ class GroupMessageSender(GroupNotifier):
 
             await self.bot.send_message(
                 chat_id=chat_id,
-                text=f"Привет👋! Я ваш таксист @{user.username}, готов помочь вам с комфортной поездкой 🚕🌟.\n\nПожалуйста, отправьте мне свою Геолокацию из меню 📎, и я приеду к вам! С нетерпением жду возможности вам помочь с перемещением по городу.\nСпасибо за выбор нашего такси-сервиса, и до скорой встречи!😊",
+                text=self.message_manager.get_message('driver_in_group', 'ua', username=user.username)
             )
 
             # Send the location map to the group
@@ -28,7 +31,7 @@ class GroupMessageSender(GroupNotifier):
 
             await self.bot.send_message(
                 chat_id=user.id,
-                text=f"Благодарим вас за предоставленное местоположение.\n\nМы успешно отправили его в группу {chat_id}. Если вы захотите обновить свою 📍геометку в этой группе, просто повторно отправьте свою Геолокацию."
+                text=self.message_manager.get_message('thanks_for_location', 'ua', chat_id=chat_id)
             )
         except Exception as e:
             # Log the error or handle it appropriately
