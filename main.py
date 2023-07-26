@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from GroupNotifier import GroupMessageSender
+from MessageManager import MessageManager
 
 load_dotenv()
 TOKEN = os.getenv('TG_BOT_TOKEN')
@@ -15,6 +16,8 @@ PORT = int(os.environ.get('PORT', 80))
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
+# Global MessageManager
+message_manager = MessageManager()
 # Global dictionary to store user locations
 user_locations = {}    
 # Create a map to store user IDs who have already pressed the button
@@ -28,7 +31,7 @@ async def handle_confirm_yes(query: types.CallbackQuery) -> None:
 
     # Check if the user has already pressed the button
     if user.id in users_pressed_confirmation_button:
-        await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить 📍геометку, просто отправьте свою Геолокацию ещё раз.")
+        await query.message.reply(message_manager.get_message('already_pressed_free_button', 'ua'))
         return
     
     users_pressed_confirmation_button.add(user.id)
@@ -44,41 +47,38 @@ async def handle_confirm_no(query: types.CallbackQuery) -> None:
     await query.answer()
     user = query.from_user
 
-    await query.message.reply("Вы отменили действие по отправке вашей 📍геометки в группу. Если вы захотите стать доступным для клиентов, просто повторно отправьте свою Геолокацию.")
+    await query.message.reply(message_manager.get_message('confirm_continue_no', 'ua'))
     
     users_pressed_confirmation_button.add(user.id)
 
 @dp.callback_query_handler(lambda query: query.data == 'free')
-async def free_btn(query: types.CallbackQuery) -> None:
+async def handle_free_button(query: types.CallbackQuery) -> None:
     try:
         await query.answer()
         user = query.from_user
         
         # Check if the user not have @username and haven't received the reminder message yet
         if user.username is None:
-            await query.message.reply("Важное сообщение! ⚠️\n\nДля продолжения работы с ботом необходимо добавить \"имя пользователя\" (также известное как \"username\") в настройках Telegram.\nБез \"имени пользователя\" бот не сможет предоставить вам полный функционал.\nДобавьте \"имя пользователя\" прямо сейчас, чтобы получить все возможности нашего бота!\n\nСпасибо за понимание! 🙏")
+            await query.message.reply(message_manager.get_message('username_important', 'ua'))
             return
 
         # Check if the user has already pressed the button
         if user.id in users_pressed_button:
-            await query.message.reply("Вы уже нажали кнопку [Свободен]. Если хотите обновить 📍геометку, просто отправьте свою Геолокацию ещё раз.")
+            await query.message.reply(message_manager.get_message('already_pressed_free_button', 'ua'))
             return
         
         users_pressed_button.add(user.id)
         
          # Create an InlineKeyboardMarkup with "Да" (Yes) and "Нет" (No) buttons
         confirm_keyboard = InlineKeyboardMarkup().add(
-            InlineKeyboardButton("Да", callback_data="confirm_yes"),
-            InlineKeyboardButton("Нет", callback_data="confirm_no")
+            InlineKeyboardButton(message_manager.get_message('confirm_yes', 'ua'), callback_data="confirm_yes"),
+            InlineKeyboardButton(message_manager.get_message('confirm_no', 'ua'), callback_data="confirm_no")
         )
 
-        await query.message.reply(
-            "Вы уверены, что хотите продолжить?",
-            reply_markup=confirm_keyboard
-        )
+        await query.message.reply(message_manager.get_message('confirm_continue', 'ua'), reply_markup=confirm_keyboard)
     except Exception as e:
         # Log the error or handle it appropriately
-        print(f"Error handling callback query in free_btn: {e}")
+        print(f"Error handling callback query in handle_free_button: {e}")
 
 @dp.message_handler(content_types=types.ContentTypes.LOCATION)
 async def handle_location(message: types.Message) -> None:
@@ -95,21 +95,24 @@ async def handle_location(message: types.Message) -> None:
         # Save the location in the global dictionary using user_id as the key
         user_locations[user.id] = {'latitude': latitude, 'longitude': longitude}
         
-        keyboard_free = InlineKeyboardMarkup().add(InlineKeyboardButton("Свободен", callback_data="free"))
-
-
+        keyboard_free = InlineKeyboardMarkup().add(InlineKeyboardButton(
+            message_manager.get_message('free', 'ua', user_mention=f"{user.mention}"),
+            callback_data="free")
+        )
+ 
         await message.reply(
-            f"Привет, {user.mention}! Если у вас есть возможность начать работать, пожалуйста, нажмите на кнопку [Свободен] ниже, чтобы поделиться своей Геолокацией. \n\n Так мы сможем отправить вашу 📍геометку в нужную группу, чтобы люди могли воспользоваться вашим такси-сервисом. \n Спасибо за вашу готовность помочь! 🚕🌟",
-            reply_markup=keyboard_free,
+            message_manager.get_message('start_working', 'ua', user_mention=f"{user.mention}"),
+            reply_markup=keyboard_free
         )
     else:
-        await message.reply(f"Простите, {user.mention}, но мы не можем получить доступ к вашему местоположению.\n\n Пожалуйста, свяжитесь с администратором чата @ramal_softdev для помощи. Будем ждать вашего обращения и надеемся, что сможем предоставить вам нашу услугу такси в ближайшее время. \n Спасибо за понимание! 🚕🌟😊")
+        await message.reply(message_manager.get_message('no_access_location', 'ua', user_mention=f"{user.mention}"))
 
 # Add handler for the start command
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message) -> None:
     user = message.from_user
-    await message.reply(fr"Привет, {user.mention}! Если вы планируете предоставлять услуги такси, пожалуйста, отправьте нам свою Геолокацию из меню 📎.")
+
+    await message.reply(message_manager.get_message('start', 'ua', user_mention=f"{user.mention}"))
 
 async def on_startup(dp):
     # Set up webhook
