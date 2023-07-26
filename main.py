@@ -14,6 +14,8 @@ BREMEN_CHAT_ID = os.getenv('TG_BREMEN_CHAT_ID')
 ODESA_CHAT_ID = os.getenv('TG_ODESA_CHAT_ID')
 ZAPORIZHHZIA_CHAT_ID = os.getenv('TG_ZAPORIZHHZIA_CHAT_ID')
 DNIPRO_CHAT_ID = os.getenv('TG_DNIPRO_CHAT_ID')
+KYIV_CHAT_ID = os.getenv('TG_KYIV_CHAT_ID')
+LVIV_CHAT_ID = os.getenv('TG_LVIV_CHAT_ID')
 
 HOST = os.getenv('HOST')
 PORT = int(os.environ.get('PORT', 80))
@@ -30,10 +32,12 @@ users_pressed_button = set()
 users_pressed_confirmation_button = set()
 # Define group options
 group_options = [
-    {"chat_id": ODESA_CHAT_ID, "name": "Odesa | Ukraine🇺🇦 Taxi🚕"},
-    {"chat_id": DNIPRO_CHAT_ID, "name": "Dnipro | Ukraine🇺🇦 Taxi🚕"},
-    {"chat_id": ZAPORIZHHZIA_CHAT_ID, "name": "Zaporizhzhia | Ukraine🇺🇦 Taxi🚕"},
-    # {"chat_id": BREMEN_CHAT_ID, "name": "Bremen🇩🇪 | Ukraine🇺🇦 Taxi🚕"},
+    {"chat_id": KYIV_CHAT_ID, "name":"Kyiv | Taxi🚕 UA🇺🇦"},
+    {"chat_id": ODESA_CHAT_ID, "name": "Odesa | Taxi🚕 UA🇺🇦"},
+    {"chat_id": LVIV_CHAT_ID, "name": "Lviv | Taxi🚕 UA🇺🇦"},
+    {"chat_id": DNIPRO_CHAT_ID, "name": "Dnipro | Taxi🚕 UA🇺🇦"},
+    {"chat_id": ZAPORIZHHZIA_CHAT_ID, "name": "Zaporizhzhia | Taxi🚕 UA🇺🇦"},
+    # {"chat_id": BREMEN_CHAT_ID, "name": "Bremen🇩🇪 | Taxi🚕 UA🇺🇦"},
 ]
 users_group = {}
 # Define lang options
@@ -43,7 +47,6 @@ lang_options = [
     {"id":LangEnum.RU, "name": "Русский"}
 ]
 users_lang = {}
-
 
 
 @dp.callback_query_handler(lambda query: query.data == 'confirm_yes')
@@ -63,6 +66,7 @@ async def handle_confirm_yes(query: types.CallbackQuery) -> None:
 
     message_sender = GroupMessageSender(bot, users_group, message_manager)
     await message_sender.send_message_to_group(location, user)
+
 @dp.callback_query_handler(lambda query: query.data == 'confirm_no')
 async def handle_confirm_no(query: types.CallbackQuery) -> None:
     await query.answer()
@@ -191,7 +195,6 @@ async def handle_group_selection(message: types.Message) -> None:
     await message.reply(message_manager.get_message('group_selection', group_name=f"{selected_group_name}"))
     await message.reply(message_manager.get_message('start', user_mention=f"{user.mention}"))
 
-
 # Function to handle the "Продолжить" (Continue) button press
 @dp.callback_query_handler(lambda query: query.data == 'continue')
 async def handle_continue_button(query: types.CallbackQuery) -> None:
@@ -211,7 +214,6 @@ async def handle_continue_button(query: types.CallbackQuery) -> None:
         # Log the error or handle it appropriately
         print(f"Error handling callback query in handle_continue_button: {e}")
 
-
 async def on_startup(dp):
     # Set up webhook
     await bot.delete_webhook()
@@ -220,17 +222,17 @@ async def on_startup(dp):
 
 if __name__ == "__main__":
     # Start the webhook
-    # executor.start_webhook(
-    #     dispatcher=dp,
-    #     webhook_path="/",
-    #     on_startup=on_startup,
-    #     skip_updates=True,
-    #     host=HOST,
-    #     port=PORT,
-    # )
+    executor.start_webhook(
+        dispatcher=dp,
+        webhook_path="/",
+        on_startup=on_startup,
+        skip_updates=True,
+        host=HOST,
+        port=PORT,
+    )
 
     # For localhost, use polling
-    executor.start_polling(dispatcher=dp, skip_updates=True)
+    # executor.start_polling(dispatcher=dp, skip_updates=True)
 
     # For deployment with webhook, comment out start_polling and uncomment start_webhook
     # Remember to set up the on_startup function accordingly for the webhook method.
