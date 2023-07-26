@@ -101,7 +101,7 @@ async def handle_location(message: types.Message) -> None:
         )
  
         await message.reply(
-            message_manager.get_message('start_working', 'ua', user_mention=f"{user.mention}"),
+            message_manager.get_message('start_working', 'ua'),
             reply_markup=keyboard_free
         )
     else:
