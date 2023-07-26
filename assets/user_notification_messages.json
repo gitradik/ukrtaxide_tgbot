@@ -25,7 +25,7 @@
         "ua": "Ви обрали групу: {group_name}.\n\nЯкщо ви бажаєте змінити свій вибір, просто введіть /start."
     },
     "lang_selection": {
-        "en": "You have selected a group: {group_name}.\n\nIf you wish to change your selection, simply type /start.",
+        "en": "You have selected a language: {lang_name}.\n\nIf you want to change your selection or choose a different language, just enter the /setlang command.",
         "ru": "Вы выбрали язык: {lang_name}.\n\nЕсли вы хотите изменить свой выбор или выбрать другой язык, просто введите команду /setlang.",
         "ua": "Ви вибрали мову: {lang_name}.\n\nЯкщо ви хочете змінити свій вибір або вибрати іншу мову, просто введіть /setlang."
     },
