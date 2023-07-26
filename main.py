@@ -139,9 +139,10 @@ async def start(message: types.Message) -> None:
 
     continue_keyboard = InlineKeyboardMarkup().add(InlineKeyboardButton("Продолжить", callback_data="continue"))
     await message.reply(message_manager.get_message('continue', user_mention=f"{user.mention}"), reply_markup=continue_keyboard)
+
 # Add handler for the setlang command
 @dp.message_handler(commands=['setlang'])
-async def start(message: types.Message) -> None:
+async def setlang(message: types.Message) -> None:
     user = message.from_user
     keyboard_lang = ReplyKeyboardMarkup(
         keyboard=[[lang['name']] for lang in lang_options],
@@ -152,6 +153,7 @@ async def start(message: types.Message) -> None:
         message_manager.get_message('choose_lang'),
         reply_markup=keyboard_lang
     )
+
 @dp.message_handler(lambda message: message.text in [lang['name'] for lang in lang_options])
 async def handle_lang_selection(message: types.Message) -> None:
     user = message.from_user
@@ -170,7 +172,6 @@ async def handle_lang_selection(message: types.Message) -> None:
     # users_lang[user.id] = selected_lang['id']
 
     await message.reply(message_manager.get_message('lang_selection', lang_name=f"{selected_lang_name}"))
-
 
 @dp.message_handler(lambda message: message.text in [group['name'] for group in group_options])
 async def handle_group_selection(message: types.Message) -> None:
